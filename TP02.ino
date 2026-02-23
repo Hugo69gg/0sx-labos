@@ -1,73 +1,90 @@
-const int ledPins[] = {8, 9, 10, 11};  // Tableau des numéros de broches
-int potentiometerPin = A1;           
-int potentiometerValue = 0; 
-int valeurConvertie = 0;         
-int ledIndex = 0;                   // Index du DEL allume
+const int ledPins[] = { 8, 9, 10, 11 };  // Tableau des numéros de broches
+int potentiometerPin = A1;
+int potentiometerValue = 0;
+int valeurConvertie = 0;
+int valeurAffichage = 0;
+int ledIndex = 0;  // Index du DEL allume
+int percent = 0;
+int value = 0;
+int lastButtonState = HIGH;
 unsigned long currentTime = 0;
+const int gradation = 20;
+unsigned long previousMillis = 0;
+const unsigned long interval = 20;
 
 
 
 void setup() {
-    Serial.begin(9600);
+  Serial.begin(9600);
 
   for (int i = 0; i < 4; i++) {
     // Initialisation des DEL en sortie
-    pinMode(ledPins[i], OUTPUT); 
-  } 
+    pinMode(ledPins[i], OUTPUT);
+  }
 
   pinMode(2, INPUT_PULLUP);
-
 }
+
+
 
 void loop() {
-
-  int buttonState = digitalRead(2);
-
   potentiometerValue = analogRead(potentiometerPin);
   valeurConvertie = map(potentiometerValue, 0, 1023, 0, 20);
-  readPotentiometer(buttonState);
-
+  percent = map(potentiometerValue, 0, 1023, 0, 100);
+  readPotentiometer();
+  diplayProgressBar();
 }
 
-void readPotentiometer(int buttonState){
-  
-  for(int i = 0; i < 4; i++) {
+void readPotentiometer() {
+
+  for (int i = 0; i < 4; i++) {
     digitalWrite(ledPins[i], LOW);
   }
-  
-  if(valeurConvertie <= 5){
+
+  if (valeurConvertie <= 5) {
     digitalWrite(ledPins[0], HIGH);
-    if(buttonState == LOW){
-      Serial.println("25% [>>>>>................]");
-    }
-  }
-  else if(valeurConvertie <= 10){
+  } else if (valeurConvertie <= 10) {
     digitalWrite(ledPins[0], HIGH);
     digitalWrite(ledPins[1], HIGH);
-    if(buttonState == LOW){
-      Serial.println("50% [>>>>>>>>>>..........]");
-    }
-  }
-  else if(valeurConvertie <= 15){
+  } else if (valeurConvertie <= 15) {
     digitalWrite(ledPins[0], HIGH);
     digitalWrite(ledPins[1], HIGH);
     digitalWrite(ledPins[2], HIGH);
-    if(buttonState == LOW){
-      Serial.println("75% [>>>>>>>>>>>>>>>.....]");
-    }
-  }
-  else if(valeurConvertie <= 20){
+  } else if (valeurConvertie <= 20) {
     digitalWrite(ledPins[0], HIGH);
     digitalWrite(ledPins[1], HIGH);
     digitalWrite(ledPins[2], HIGH);
     digitalWrite(ledPins[3], HIGH);
-    if(buttonState == LOW){
-      Serial.println("100% [>>>>>>>>>>>>>>>>>>>>]");
-    }
   }
 }
 
+void diplayProgressBar() {
+  int buttonState = digitalRead(2);
+  value = percent / 5;
+  unsigned long currentMillis = millis();
+  if ((currentMillis - previousMillis) >= interval) {
+    previousMillis = currentMillis;
+  }
 
 
 
 
+
+  if (lastButtonState == HIGH && buttonState == LOW) {
+    Serial.print(percent);
+    Serial.print("%");
+    Serial.print("[");
+   
+    for (int i = 0; i < gradation; i++) {
+      if (i < value) {
+        Serial.print(">");
+      } else {
+        Serial.print(".");
+      }
+    }
+    Serial.println("]");
+  }
+
+
+  lastButtonState = buttonState;
+}
